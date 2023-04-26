@@ -1,0 +1,1 @@
+# non-transferable-erc1155
