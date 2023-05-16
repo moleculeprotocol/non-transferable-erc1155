@@ -19,7 +19,8 @@ contract TokenTest is Test {
         vm.startPrank(deployer);
         token = new MyToken();
 
-        token.mint(deployer, 1, 250, "ar://ergiuehrgiuerhg");
+        token.createToken(1, 250, "ar://ergiuehrgiuerhg");
+        token.mint(deployer, 1, 250);
 
         easyAuction = new EasyAuctionMock(address(token));
         token.safeTransferFrom(deployer, alice, 1, 1, "");
@@ -89,5 +90,26 @@ contract TokenTest is Test {
 
         assertEq(token.balanceOf(address(easyAuction), 1), 0);
         assertEq(token.balanceOf(bob, 1), 1);
+    }
+
+    function testMintNonExistentToken() public {
+        vm.startPrank(deployer);
+        vm.expectRevert("Token doesn't exist");
+        token.mint(deployer, 2, 1);
+        vm.stopPrank();
+    }
+
+    function testMintMoreThanMax() public {
+        vm.startPrank(deployer);
+        vm.expectRevert("Amount exceeds max supply");
+        token.mint(deployer, 1, 1);
+        vm.stopPrank();
+    }
+
+    function testCreateAlreadyExistentToken() public {
+        vm.startPrank(deployer);
+        vm.expectRevert("Token already exists");
+        token.createToken(1, 1, "ar://ergiuehrgiuerhg");
+        vm.stopPrank();
     }
 }

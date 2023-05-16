@@ -13,14 +13,29 @@ contract MyToken is ERC1155, ERC1155Burnable, ERC1155URIStorage, AccessControl, 
 
     bool public transfersEnabled = false;
 
+    mapping(uint8 => uint16) tokenMaxSupply;
+
     constructor() ERC1155("") {
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _grantRole(MINTER_ROLE, msg.sender);
     }
 
-    function mint(address account, uint256 id, uint256 amount, string memory tokenURI) public onlyRole(MINTER_ROLE) {
-        _mint(account, id, amount, "");
+    function createToken(uint8 id, uint16 maxSupply, string memory tokenURI) public onlyRole(DEFAULT_ADMIN_ROLE) {
+        require(tokenMaxSupply[id] == 0, "Token already exists");
+        tokenMaxSupply[id] = maxSupply;
         _setURI(id, tokenURI);
+    }
+
+    function mint(address recipient, uint8 id, uint256 amount) public onlyRole(MINTER_ROLE) {
+        require(tokenMaxSupply[id] != 0, "Token doesn't exist");
+        require(totalSupply(id) + amount <= tokenMaxSupply[id], "Amount exceeds max supply");
+        _mint(recipient, id, amount, "");
+    }
+
+    function mint(address recipient, uint8 id) public onlyRole(MINTER_ROLE) {
+        require(tokenMaxSupply[id] != 0, "Token doesn't exist");
+        require(totalSupply(id) + 1 <= tokenMaxSupply[id], "Amount exceeds max supply");
+        _mint(recipient, id, 1, "");
     }
 
     // In this implementation this is one-way: once transfers are enabled, they cannot be disabled again
